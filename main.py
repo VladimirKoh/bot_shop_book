@@ -6,6 +6,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, KeyboardBu
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
+from contextlib import suppress
+from aiogram.utils.exceptions import MessageNotModified
 # from apscheduler.schedulers.asyncio import AsyncIOSchedulerip
 from dotenv import load
 from sqllite import Database
@@ -66,6 +68,10 @@ def get_keyboard_next():
 
 # async def apschedule_check_pay():
 #     await sucsess_pay()
+
+async def edit_text_message(message: types.Message):
+    with suppress(MessageNotModified):
+        await message.edit_text("✅ Платеж успешно прошел, держи свою книгу")
 
 
 @dp.message_handler(commands='start')
@@ -184,7 +190,7 @@ async def callback_check_balance_pay(callback: types.CallbackQuery):
     label = callback.data.split('_')[-1]
     result = sucsess_pay(label)
     if result:
-        await callback.message.answer('✅ Платеж успешно прошел, держи свою книгу')
+        await edit_text_message(callback.message)
         await bot.send_document(chat_id=callback.from_user.id, document=open("./Book_by_Test.pdf", "rb"), caption="Какой то текст описание книги")
         db.set_pay(callback.from_user.id)
     else:
